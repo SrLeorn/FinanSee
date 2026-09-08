@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FinanSee — Vida Financeira</title>
+<meta name="theme-color" content="#5b5ce2">
+<meta name="description" content="FinanSee — finanças pessoais locais, simples e privadas.">
+<meta name="application-version" content="8.0.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="stylesheet" href="./css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+
+</head>
+<body class="security-checking auth-required">
+<!-- ========================================================= HTML — INTRO DE INSTALAÇÃO ========================================================= -->
+<div class="install-intro-screen" id="installIntroScreen" aria-label="Instalar FinanSee">
+  <div class="install-intro-card">
+    <div class="auth-brand"><div class="lock-logo">F</div><div><div class="eyebrow">FinanSee</div><h1>Use do seu jeito.</h1></div></div>
+    <p class="muted">Você pode instalar o FinanSee como aplicativo ou continuar usando normalmente no navegador.</p>
+    <div class="install-intro-actions">
+      <button class="btn primary" id="introInstallBtn" onclick="installFromIntro()">Instalar FinanSee</button>
+      <button class="btn" onclick="continueInBrowser()">Continuar no navegador</button>
+    </div>
+    <div class="install-intro-hint muted" id="installIntroHint">Verificando opções de instalação...</div>
+  </div>
+</div>
+
+<!-- ========================================================= HTML — LOGIN / CRIAÇÃO DE CONTA ========================================================= -->
+<div class="auth-screen" id="authScreen" role="dialog" aria-modal="true" aria-label="Acesso ao FinanSee">
+  <div class="auth-card">
+    <div class="auth-brand"><div class="lock-logo">F</div><div><div class="eyebrow">FinanSee</div><h1>Seu dinheiro, seu perfil.</h1></div></div>
+    <p class="muted">Crie uma conta local para manter perfis separados neste dispositivo. Seus dados financeiros começam zerados.</p>
+    <div class="auth-tabs"><button id="authLoginTab" class="active" onclick="switchAuth('login')">Entrar</button><button id="authRegisterTab" onclick="switchAuth('register')">Criar conta</button></div>
+    <div id="loginPanel" class="auth-panel active">
+      <div class="field"><label>E-mail</label><input id="loginEmail" type="email" autocomplete="username" placeholder="voce@email.com"></div>
+      <div class="field"><label>Senha</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Sua senha"></div>
+      <button class="btn primary auth-main" onclick="loginAccount()">Entrar</button>
+      <button class="auth-link" type="button" onclick="forgotPassword()">Esqueci minha senha</button>
+      <small class="muted">A conta existe somente neste navegador/dispositivo. Não há recuperação por e-mail. Para levar seus dados a outro aparelho, use o backup JSON.</small>
+    </div>
+    <div id="registerPanel" class="auth-panel">
+      <div class="field"><label>Seu nome</label><input id="regName" autocomplete="name" placeholder="Como devemos chamar você?"></div>
+      <div class="field"><label>E-mail</label><input id="regEmail" type="email" autocomplete="email" placeholder="voce@email.com"></div>
+      <div class="field"><label>Senha</label><input id="regPassword" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres"></div>
+      <div class="field"><label>Confirmar senha</label><input id="regConfirm" type="password" autocomplete="new-password" placeholder="Repita a senha"></div>
+      <button class="btn primary auth-main" onclick="createAccount()">Criar minha conta</button>
+      <small class="muted">Nenhum salário, gasto, meta ou dado de exemplo será criado automaticamente.</small>
+    </div>
+    <div class="auth-message" id="authMessage"></div>
+    <div class="auth-local-note">🔒 Senhas são derivadas com PBKDF2/SHA-256 antes de serem armazenadas localmente.</div>
+  </div>
+</div>
+<!-- ========================================================= HTML — PRIMEIROS PASSOS / ONBOARDING ========================================================= -->
+<div class="onboarding-screen" id="onboardingScreen" aria-label="Primeiros passos do FinanSee">
+  <div class="onboarding-shell">
+    <div class="onboarding-brand"><div class="lock-logo">F</div><div><div class="eyebrow">FinanSee · Primeiros passos</div><h1>Vamos montar sua vida financeira.</h1><p class="muted">São quatro etapas rápidas. A renda vem primeiro porque é ela que permite calcular todo o resto.</p></div></div>
+    <div class="onboarding-progress" id="onboardingProgress">
+      <div data-ob-dot="1"><span>1</span><small>Renda</small></div><div data-ob-dot="2"><span>2</span><small>Gastos</small></div><div data-ob-dot="3"><span>3</span><small>Metas</small></div><div data-ob-dot="4"><span>4</span><small>Cofre</small></div>
+    </div>
+
+    <section class="onboarding-step" data-ob-step="1">
+      <div class="step-kicker">ETAPA 1 DE 4 · ESSENCIAL</div><h2>Qual dinheiro entra todo mês?</h2>
+      <p class="muted">Comece pela sua principal renda líquida. Depois você pode adicionar outras rendas e usar o modo detalhado.</p>
+      <div class="form onboarding-form">
+        <div class="field full"><label>Nome da renda</label><input id="obIncomeTitle" placeholder="Ex.: Salário"></div>
+        <div class="field"><label>Valor líquido mensal</label><input id="obIncomeNet" inputmode="decimal" placeholder="R$ 0,00"></div>
+        <div class="field"><label>Dia do pagamento</label><input id="obIncomePayDay" type="number" min="1" max="31" value="5"></div>
+        <div class="field full"><label>Empresa / origem (opcional)</label><input id="obIncomeCompany" placeholder="Ex.: Empresa onde trabalho"></div>
+      </div>
+      <div class="onboarding-actions"><button class="btn primary" onclick="onboardingSaveIncome()">Salvar renda e continuar →</button></div>
+      <div class="backup-shortcut"><span>Já usava o FinanSee?</span><label class="btn sm">Importar meu backup JSON<input type="file" hidden accept=".json,application/json" onchange="importOnboardingBackup(event)"></label></div>
+    </section>
+
+    <section class="onboarding-step" data-ob-step="2">
+      <div class="step-kicker">ETAPA 2 DE 4</div><h2>Agora, seus gastos.</h2>
+      <p class="muted">Cadastre pelo menos os compromissos que mais pesam no mês. Você pode adicionar quantos quiser agora ou completar depois.</p>
+      <div class="form onboarding-form">
+        <div class="field full"><label>Gasto</label><input id="obExpenseName" placeholder="Ex.: Aluguel, internet, cartão"></div>
+        <div class="field"><label>Valor</label><input id="obExpenseValue" inputmode="decimal" placeholder="R$ 0,00"></div>
+        <div class="field"><label>Categoria</label><select id="obExpenseCategory"><option>Moradia</option><option>Alimentação</option><option>Transporte</option><option>Saúde</option><option>Assinaturas</option><option>Lazer</option><option>Compras</option><option>Educação</option><option>Dívidas</option><option>Outros</option></select></div>
+        <div class="field"><label>Tipo</label><select id="obExpenseType"><option value="indefinite">Mensal / fixo</option><option value="single">Compra única</option></select></div>
+        <div class="field"><label>Vencimento</label><input id="obExpenseDue" type="date"></div>
+      </div>
+      <div class="onboarding-inline-actions"><button class="btn" onclick="onboardingAddExpense()">+ Adicionar gasto</button><span class="muted" id="obExpenseCount">Nenhum gasto adicionado ainda.</span></div>
+      <div class="onboarding-actions"><button class="btn" onclick="onboardingGoStep(1)">← Voltar</button><button class="btn primary" onclick="onboardingGoStep(3)">Continuar →</button></div>
+    </section>
+
+    <section class="onboarding-step" data-ob-step="3">
+      <div class="step-kicker">ETAPA 3 DE 4</div><h2>Tem algo que quer conquistar?</h2>
+      <p class="muted">Uma meta pode ser viagem, celular, entrada de um imóvel ou qualquer objetivo com valor definido. Esta etapa é opcional.</p>
+      <div class="form onboarding-form">
+        <div class="field full"><label>Nome da meta</label><input id="obGoalName" placeholder="Ex.: Reserva para viagem"></div>
+        <div class="field"><label>Valor da meta</label><input id="obGoalTarget" inputmode="decimal" placeholder="R$ 0,00"></div>
+        <div class="field"><label>Já guardado (opcional)</label><input id="obGoalSaved" inputmode="decimal" placeholder="R$ 0,00"></div>
+      </div>
+      <div class="onboarding-inline-actions"><button class="btn" onclick="onboardingAddGoal()">+ Adicionar meta</button><span class="muted" id="obGoalCount">Nenhuma meta adicionada.</span></div>
+      <div class="onboarding-actions"><button class="btn" onclick="onboardingGoStep(2)">← Voltar</button><button class="btn primary" onclick="onboardingGoStep(4)">Continuar →</button></div>
+    </section>
+
+    <section class="onboarding-step" data-ob-step="4">
+      <div class="step-kicker">ETAPA 4 DE 4</div><h2>Quer separar algum dinheiro num cofre?</h2>
+      <p class="muted">Cofres servem para dinheiro reservado sem uma meta obrigatória. Esta etapa também é opcional.</p>
+      <div class="form onboarding-form">
+        <div class="field full"><label>Nome do cofre</label><input id="obVaultName" placeholder="Ex.: Emergência"></div>
+        <div class="field"><label>Categoria</label><select id="obVaultCategory"><option>Emergência</option><option>Casa</option><option>Educação</option><option>Viagem</option><option>Lazer</option><option>Tecnologia</option><option>Saúde</option><option>Família</option><option>Investimentos</option><option>Outros</option></select></div>
+        <div class="field"><label>Saldo inicial (opcional)</label><input id="obVaultInitial" inputmode="decimal" placeholder="R$ 0,00"></div>
+      </div>
+      <div class="onboarding-inline-actions"><button class="btn" onclick="onboardingAddVault()">+ Adicionar cofre</button><span class="muted" id="obVaultCount">Nenhum cofre adicionado.</span></div>
+      <div class="onboarding-finish"><div><b>Pronto para começar.</b><p class="muted">Depois disso você entra no Início e pode editar ou complementar tudo quando quiser.</p></div></div>
+      <div class="onboarding-actions"><button class="btn" onclick="onboardingGoStep(3)">← Voltar</button><button class="btn primary" onclick="completeOnboarding()">Concluir e abrir o FinanSee ✓</button></div>
+    </section>
+  </div>
+</div>
+<div class="offline-banner" id="offlineBanner">📡 Você está offline. Seus dados locais continuam disponíveis.</div>
+<!-- ========================================================= HTML — NAVEGAÇÃO ========================================================= -->
+<aside class="sidebar"><div class="logo">Finan<i>See</i></div><nav class="nav" id="nav"></nav><button class="btn" style="margin-top:20px;width:100%" onclick="toggleTheme()">☾ Tema</button></aside>
+<main class="main">
+<!-- ========================================================= HTML — CABEÇALHO ========================================================= -->
+<header class="top"><div><div class="eyebrow">FinanSee · Vida financeira</div><h1 id="title">Início</h1><div class="muted" id="monthText"></div></div><div class="actions header-actions"><button class="btn install-top" id="installTopBtn" style="display:none" onclick="installPwa()">Instalar</button><button class="btn mobile-theme icon-only" onclick="toggleTheme()" aria-label="Alternar tema"><span id="themeIcon">☾</span></button><button class="btn lock-btn icon-only" onclick="lockApp()" aria-label="Bloquear aplicativo">🔒</button><button class="btn account-btn" id="accountMenuBtn" onclick="toggleProfileMenu(event)" title="Perfil" aria-haspopup="menu" aria-expanded="false"><span class="avatar-mini" id="headerAvatar">F</span><span id="headerUser">Conta</span><span class="chev">⌄</span></button><button class="btn desktop-quick" onclick="resetExpenseForm();openM('expense')">+ Gasto</button><button class="btn primary desktop-quick" onclick="openIncomeModal()">+ Renda</button></div></header>
+<div class="month-reference" id="monthReference">
+  <button class="btn sm" onclick="changeReferenceMonth(-1)" aria-label="Mês anterior">‹</button>
+  <button class="month-reference-main" onclick="goCurrentMonth()"><span class="muted">Competência</span><b id="referenceMonthLabel">—</b></button>
+  <button class="btn sm" onclick="changeReferenceMonth(1)" aria-label="Próximo mês">›</button>
+</div>
+<div class="profile-popover" id="profileMenu" role="menu" aria-label="Menu do perfil">
+  <div class="profile-summary"><div class="avatar-large" id="profileAvatar">F</div><div><b id="profileMenuName">Usuário</b><small id="profileMenuEmail">—</small></div></div>
+  <button onclick="openSettingsCard('profileCard')">Meu perfil</button>
+  <button onclick="openSettingsCard('securityCard')">Segurança</button>
+  <button onclick="openSettingsCard('backupCard')">Backup e restauração</button>
+  <button onclick="openSettingsCard('appearanceCard')">Aparência</button>
+  <button onclick="openSettingsCard('aboutCard')">Sobre o FinanSee</button>
+  <div class="profile-separator"></div>
+  <button class="profile-logout" onclick="logoutAccount()">Sair</button>
+</div>
+<!-- ========================================================= HTML — DASHBOARD ========================================================= -->
+<section class="page active" id="dashboard">
+  <div id="dashboardGuide"></div>
+  <div class="grid stats">
+    <div class="card stat"><div class="label">RENDA LÍQUIDA</div><div class="value ok" id="dIncome">R$ 0</div><div class="muted" id="dIncomeSub">previsão da competência</div></div>
+    <div class="card stat"><div class="label">COMPROMISSOS</div><div class="value bad" id="dCommit">R$ 0</div><div class="muted">neste mês</div></div>
+    <div class="card stat"><div class="label">DISPONÍVEL</div><div class="value" id="dAvail">R$ 0</div><div class="muted">após compromissos</div></div>
+    <div class="card stat"><div class="label">PENDÊNCIAS ANTERIORES</div><div class="value bad" id="dArrears">R$ 0</div><div class="muted">não pagas de meses anteriores</div></div>
+    <div class="card stat"><div class="label">VA RESTANTE</div><div class="value ok" id="dVaRemaining">R$ 0</div><div class="muted" id="dVaSub">Depositado: R$ 0</div></div>
+    <div class="card stat"><div class="label">RESERVA</div><div class="reserve-box"><div class="reserve-part"><div class="mini-label">Metas</div><div class="mini-value" id="dReserveGoals">R$ 0</div><div class="muted" id="dReserveGoalsSub">Depositado: R$ 0</div></div><div class="reserve-divider"></div><div class="reserve-part"><div class="mini-label">Cofres</div><div class="mini-value" id="dReserveVault">R$ 0</div></div></div></div>
+  </div>
+  <div class="grid two dashboard-insights">
+    <div class="card hero-insight"><div class="eyebrow">Ritmo do mês</div><h2>Quanto posso gastar por dia?</h2><div class="daily-safe" id="dailySafe">R$ 0,00</div><p class="muted" id="dailySafeHint">Cadastre uma renda para calcular.</p></div>
+    <div class="card"><div class="eyebrow">Projeção</div><h2>Como o mês deve terminar</h2><div class="row"><span>Renda prevista</span><b id="projIncome">R$ 0</b></div><div class="row"><span>Compromissos previstos</span><b id="projExpenses">R$ 0</b></div><div class="row"><span>Saldo projetado</span><b id="projBalance">R$ 0</b></div></div>
+  </div>
+  <div class="grid two dashboard-insights">
+    <div class="card"><div class="top compact"><div><div class="eyebrow">Limites</div><h2>Orçamento por categoria</h2></div><button class="btn sm" onclick="openBudgetModal()">Gerenciar</button></div><div id="budgetOverview"></div></div>
+    <div class="card"><div class="eyebrow">Recorrências</div><h2>Próximas cobranças</h2><div id="recurringUpcoming"></div></div>
+  </div>
+  <div class="grid two dashboard-insights"><div class="card"><div class="eyebrow">Orçamento</div><h2>Comprometimento da renda</h2><div class="chart"><canvas id="donut"></canvas></div><div class="row"><span>Comprometido</span><b id="pct">0%</b></div></div><div class="card"><div class="eyebrow">Categorias</div><h2>Para onde vai</h2><div class="chart"><canvas id="cats"></canvas></div></div></div>
+  <div class="grid two dashboard-insights"><div class="card"><div class="eyebrow">Próximos eventos</div><h2>Calendário financeiro</h2><div id="upcoming"></div></div><div class="card"><div class="eyebrow">Indicador</div><h2>Saúde do orçamento</h2><div id="health"></div></div></div>
+  <div class="card activity-card"><div class="eyebrow">Histórico</div><h2>Atividade recente</h2><div id="activityTimeline"></div></div>
+</section>
+<!-- ========================================================= HTML — GASTOS ========================================================= -->
+<section class="page" id="expenses"><div class="card"><div class="top"><div><div class="eyebrow">Contas & despesas</div><h2>Gastos da competência</h2><div class="muted">Marque cada conta como paga. O que ficar pendente é carregado para o mês seguinte.</div></div><button class="btn primary" onclick="resetExpenseForm();openM('expense')">+ Adicionar gasto</button></div><div id="expenseSummary" class="grid three mini-summary"></div><div id="expenseList"></div></div></section>
+<!-- ========================================================= HTML — RENDAS ========================================================= -->
+<section class="page" id="income"><div class="card"><div class="top"><div><div class="eyebrow">Receitas</div><h2>Rendas da competência</h2><div class="muted">Cada fonte mantém um valor estimado e um histórico do que realmente entrou em cada mês.</div></div><button class="btn primary" onclick="openIncomeModal()">+ Adicionar renda</button></div><div id="incomeMonthSummary" class="grid three mini-summary"></div><div id="incomeList"></div></div></section>
+<!-- ========================================================= HTML — CALENDÁRIO ========================================================= -->
+<section class="page" id="calendar">
+  <div class="calendar-layout">
+    <div class="card">
+      <div class="top"><div><div class="eyebrow">Agenda financeira</div><h2 id="calTitle"></h2></div><button class="btn sm" onclick="openM('holiday')">+ Feriado/local</button></div>
+      <div class="calendar" id="cal"></div>
+    </div>
+    <aside class="card calendar-detail"><div class="eyebrow">Dia selecionado</div><h2 id="calendarDayTitle">Selecione um dia</h2><div id="calendarDayDetails" class="muted">Clique em um dia com indicador para ver vencimentos, rendas, pagamentos e feriados.</div></aside>
+  </div>
+</section>
+<!-- ========================================================= HTML — ALERTAS ========================================================= -->
+<section class="page" id="alerts"><div class="grid two"><div class="card"><div class="eyebrow">Automáticos</div><h2>Alertas</h2><div id="alertsList"></div></div><div class="card"><div class="eyebrow">Trabalho</div><h2>Prazos</h2><div id="work"></div></div></div></section>
+<!-- ========================================================= HTML — PLANEJAMENTO ========================================================= -->
+<section class="page" id="planning"><div class="card"><div class="eyebrow">Planejamento</div><div class="top"><div><h2>Metas financeiras</h2><div class="muted">Dinheiro separado para objetivos específicos.</div></div><button class="btn primary" onclick="openM('goal')">+ Nova meta</button></div><div id="goals"></div></div></section>
+<!-- ========================================================= HTML — COFRE ========================================================= -->
+<section class="page" id="vaults"><div class="card"><div class="top"><div><div class="eyebrow">Dinheiro guardado</div><h2>Cofres</h2><div class="muted">Reserve dinheiro sem misturar com as suas metas.</div></div><button class="btn primary" onclick="openM('vault')">+ Novo cofre</button></div><div class="grid three" style="margin-bottom:16px"><div><small class="muted">TOTAL NOS COFRES</small><div class="value ok" id="vaultTotal">R$ 0</div></div><div><small class="muted">QUANTIDADE</small><div class="value" id="vaultCount">0</div></div><div><small class="muted">METAS DEPOSITADAS</small><div class="value" id="vaultGoalsRef">R$ 0</div></div></div><div class="grid two" id="vaultList"></div></div></section>
+<!-- ========================================================= HTML — VALE ALIMENTAÇÃO ========================================================= -->
+<section class="page" id="food">
+  <div class="card">
+    <div class="top"><div><div class="eyebrow">Carteira separada</div><h2>Vale Alimentação</h2><div class="muted">Controle o valor previsto, o que realmente foi depositado e onde o saldo foi usado.</div></div><div class="actions"><button class="btn" onclick="openVaConfig()">Configurar</button><button class="btn primary" onclick="openVaSpend()">+ Registrar gasto</button></div></div>
+    <div class="grid four va-stats">
+      <div><small class="muted">PREVISTO</small><div class="value" id="vaExpected">R$ 0</div></div>
+      <div><small class="muted">DEPOSITADO</small><div class="value ok" id="vaDeposited">R$ 0</div></div>
+      <div><small class="muted">GASTO</small><div class="value bad" id="vaSpent">R$ 0</div></div>
+      <div><small class="muted">RESTANTE</small><div class="value ok" id="vaRemaining">R$ 0</div></div>
+    </div>
+    <div class="top compact"><h3>Movimentações da competência</h3><button class="btn sm" onclick="registerVaDeposit()">Registrar depósito</button></div>
+    <div id="vaTransactions"></div>
+  </div>
+</section>
+<!-- ========================================================= HTML — SIMULADOR ========================================================= -->
+<section class="page" id="purchase"><div class="grid two"><div class="card"><div class="eyebrow">Planeje antes de comprar</div><h2>Posso comprar?</h2><div class="form"><div class="field full"><label>Produto</label><input id="pName" placeholder="Ex.: celular"></div><div class="field"><label>Preço à vista</label><input id="pCash" placeholder="R$ 0,00"></div><div class="field"><label>Total no parcelado</label><input id="pTotal" placeholder="R$ 0,00"></div><div class="field"><label>Forma de pagamento</label><select id="pMethod" onchange="paymentUI()"><option value="pix">PIX</option><option value="card">Cartão</option><option value="boleto">Boleto</option><option value="pixcard">PIX + cartão</option><option value="boletoCard">Boleto + cartão</option><option value="twoCards">2 cartões</option></select></div><div class="field"><label>Parcelas</label><input id="pParts" type="number" min="1" value="1"></div><div class="field full" id="paymentFields"></div></div><br><button class="btn primary" onclick="simulate()">Analisar compra</button></div><div class="card" id="result"><div class="empty">Preencha a simulação para ver o impacto.</div></div></div></section>
+<!-- ========================================================= HTML — RELATÓRIOS ========================================================= -->
+<section class="page" id="reports">
+  <div class="top report-actions"><div><div class="eyebrow">Fechamento mensal</div><h2>Relatório da competência</h2></div><button class="btn primary" onclick="printMonthlyReport()">Imprimir / Salvar PDF</button></div>
+  <div class="report-document card" id="monthlyReport"></div>
+  <br><div class="card no-print"><h2>Visão dos últimos meses</h2><div class="chart"><canvas id="months"></canvas></div></div>
+</section>
+<!-- ========================================================= HTML — CONFIGURAÇÕES ========================================================= -->
+<section class="page" id="settings">
+<div class="grid two settings-grid">
+  <div class="card" id="profileCard">
+    <div class="eyebrow">Conta</div><h2>Seu acesso</h2>
+    <div class="row"><span>Nome</span><b id="accountName">—</b></div>
+    <div class="row"><span>E-mail</span><b id="accountEmail">—</b></div>
+    <p class="muted small-note">Esta conta e seus dados ficam neste navegador/dispositivo. Perfis diferentes usam armazenamentos separados.</p>
+    <div class="form"><div class="field"><label>Senha atual</label><input id="accountOldPassword" type="password" autocomplete="current-password"></div><div class="field"><label>Nova senha</label><input id="accountNewPassword" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres"></div><div class="field"><label>Confirmar nova senha</label><input id="accountNewConfirm" type="password" autocomplete="new-password"></div></div>
+    <br><div class="actions"><button class="btn" onclick="changeAccountPassword()">Alterar senha</button><button class="btn danger" onclick="logoutAccount()">Sair da conta</button></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow">Perfil</div><h2>Configurações</h2>
+    <div class="form"><div class="field"><label>Nome</label><input id="cfgName"></div><div class="field"><label>Fechamento da folha</label><input id="cfgClose" type="number" min="1" max="31"></div><div class="field"><label>Estado (UF)</label><input id="cfgState" maxlength="2" placeholder="Ex.: RS"></div><div class="field"><label>Município</label><input id="cfgCity" placeholder="Ex.: Porto Alegre"></div><div class="field full"><label>Reservas</label><p class="muted" style="margin:0">Metas e Cofres são gerenciados nas abas próprias para não misturar objetivos diferentes.</p></div></div>
+    <br><button class="btn primary" onclick="saveCfg()">Salvar configurações</button>
+  </div>
+  <div class="card">
+    <div class="eyebrow">PWA</div><h2>Instalação</h2>
+    <p class="muted">Depois de publicado em HTTPS, o FinanSee pode ser instalado na tela inicial e aberto sem a barra do navegador.</p>
+    <div class="status-line" id="pwaStatus">Verificando...</div><br>
+    <button class="btn primary" id="installPwaBtn" onclick="installPwa()">⬇ Instalar FinanSee</button>
+    <p class="muted small-note">O núcleo do app funciona offline após a primeira visita e seus dados permanecem armazenados localmente neste dispositivo.</p>
+  </div>
+  <div class="card" id="securityCard">
+    <div class="eyebrow">Privacidade</div><h2>Senha / PIN local</h2>
+    <div class="status-line" id="securityStatus">Verificando...</div>
+    <p class="muted">A senha não é salva em texto puro: o FinanSee guarda um derivado criptográfico local. Este bloqueio protege o acesso pela interface, mas não transforma o navegador em um cofre criptográfico.</p>
+    <div class="form"><div class="field"><label>Nova senha ou PIN</label><input id="securityNew" type="password" autocomplete="new-password" placeholder="Mínimo 4 caracteres"></div><div class="field"><label>Confirmar</label><input id="securityConfirm" type="password" autocomplete="new-password"></div><div class="field"><label>Bloqueio automático</label><select id="securityTimeout" onchange="updateSecurityTimeout()"><option value="0">Ao sair do app</option><option value="1">1 minuto</option><option value="5">5 minutos</option><option value="15">15 minutos</option><option value="30">30 minutos</option></select></div></div>
+    <br><div class="actions"><button class="btn primary" onclick="saveLocalPassword()">Salvar senha/PIN</button><button class="btn danger" id="securityDisableBtn" onclick="disableLocalSecurity()">Desativar</button></div>
+  </div>
+  <div class="card" id="backupCard">
+    <div class="eyebrow">Seus dados</div><h2>Backup e privacidade</h2>
+    <div class="privacy-callout"><b>🔐 Seus dados financeiros ficam neste navegador.</b><span>O FinanSee não envia salários, gastos, metas ou cofres para um servidor próprio. Faça backup regularmente para não depender de um único aparelho.</span></div>
+    <p class="muted">O backup exporta somente os dados financeiros da conta atualmente aberta. Ao importar, o conteúdo entra apenas neste perfil.</p>
+    <div class="actions"><button class="btn primary" onclick="exportData()">Exportar backup JSON</button><label class="btn">Importar JSON<input type="file" hidden accept=".json,application/json" onchange="importData(event)"></label></div>
+    <hr class="soft-line">
+    <div class="danger-zone"><b>Zona de segurança</b><p class="muted small-note">Limpar os dados mantém sua conta. Excluir o perfil remove conta, dados, PIN e configurações locais deste usuário.</p><div class="actions"><button class="btn danger" onclick="resetData()">Limpar dados financeiros</button><button class="btn danger danger-solid" onclick="deleteCurrentProfile()">Excluir perfil</button></div></div>
+  </div>
+  <div class="card" id="appearanceCard">
+    <div class="eyebrow">Aparência</div><h2>Tema</h2>
+    <p class="muted small-note">Escolha como o FinanSee deve acompanhar seu dispositivo.</p>
+    <div class="theme-choice" id="themeChoice"><button data-theme-mode="system" onclick="setThemeMode('system')">Sistema</button><button data-theme-mode="light" onclick="setThemeMode('light')">Claro</button><button data-theme-mode="dark" onclick="setThemeMode('dark')">Escuro</button></div>
+  </div>
+  <div class="card" id="aboutCard">
+    <div class="eyebrow">Sobre</div><h2>FinanSee</h2>
+    <div class="row"><span>Versão</span><b>8.0.0</b></div>
+    <div class="row"><span>Formato</span><b>PWA · local-first</b></div>
+    <p class="muted small-note">Finanças pessoais práticas, sem cadastro em servidor próprio e com funcionamento offline após o primeiro carregamento.</p>
+  </div>
+</div>
+</section>
+</main>
+<!-- ========================================================= HTML — NAVEGAÇÃO MOBILE ========================================================= -->
+<nav class="bottom" id="bottom"></nav>
+<!-- ========================================================= HTML — MODAL DE GASTO ========================================================= -->
+<div class="modal-bg" id="mExpense"><div class="modal"><div class="modal-head"><div><div class="eyebrow">Despesa</div><h2 id="expenseModalTitle">Adicionar gasto</h2></div><button class="close" onclick="closeM('expense')">×</button></div><div class="form"><div class="field full"><label>Nome</label><input id="eName" placeholder="Ex.: Notebook ou Dívida do carro"></div><div class="field"><label>Categoria</label><select id="eCat"><option>Alimentação</option><option>Moradia</option><option>Transporte</option><option>Saúde</option><option>Lazer</option><option>Assinaturas</option><option>Compras</option><option>Educação</option><option>Dívidas</option><option>Outros</option></select></div><div class="field"><label>Tipo</label><select id="eType" onchange="expenseUI()"><option value="single">Compra única</option><option value="installment">Compra parcelada</option><option value="subscription">Mensalidade com prazo</option><option value="indefinite">Mensalidade indeterminada</option></select></div><div class="field"><label>Responsabilidade</label><select id="eResponsibility" onchange="expenseUI()"><option value="mine">100% minha</option><option value="shared">Dividida com outras pessoas</option></select></div><div class="field"><label>Forma de pagamento</label><select id="eMethod" onchange="expenseUI()"><option>PIX</option><option>PIX Crédito</option><option>Dinheiro</option><option>Débito</option><option>Cartão de crédito</option><option>Boleto</option></select></div><div class="field"><label>Data</label><input id="eDate" type="date"></div><div class="field"><label>Primeiro vencimento</label><input id="eDue" type="date"></div><div class="field" id="partsWrap" style="display:none"><label>Parcelas / meses</label><input id="eParts" type="number" min="1" value="1"></div><div class="field full" id="normalValueWrap"><label>Valor</label><input id="eVal" placeholder="R$ 0,00"></div>
+<div class="field full" id="pixCreditWrap" style="display:none"><div class="card" style="padding:14px"><b>PIX Crédito</b><p class="muted" style="margin:5px 0 12px">Informe o valor enviado e o total que o banco/cartão realmente cobrará. O FinanSee calcula o custo extra sem tentar adivinhar a taxa.</p><div class="form"><div class="field"><label>Valor enviado</label><input id="ePixSent" placeholder="R$ 0,00"></div><div class="field"><label>Total cobrado</label><input id="ePixTotal" placeholder="R$ 0,00"></div><div class="field"><label>Parcelas</label><input id="ePixParts" type="number" min="1" max="10" value="1"></div><div class="field"><label>Custo extra</label><input id="ePixExtra" readonly></div><div class="field full"><label>Acréscimo efetivo</label><input id="ePixPct" readonly></div></div></div></div><div class="field full" id="sharedDebtWrap" style="display:none"><div class="card" style="padding:14px"><b>Divisão da dívida</b><p class="muted" style="margin:5px 0 12px">Ex.: dívida de R$ 20.000 em 40x. A parcela atual é R$ 500 e você paga R$ 250.</p><div class="form"><div class="field"><label>Valor total da dívida</label><input id="eDebtTotal" placeholder="R$ 20.000,00"></div><div class="field"><label>Total de parcelas</label><input id="eDebtParts" type="number" min="1" value="1"></div><div class="field"><label>Parcela atual (valor total)</label><input id="eCurrentPart" placeholder="R$ 500,00"></div><div class="field"><label>Quanto VOCÊ paga da parcela</label><input id="eMyShare" placeholder="R$ 250,00"></div><div class="field full"><label>Quanto as outras pessoas pagam</label><input id="eOthersShare" readonly></div></div></div></div></div><div class="modal-foot"><button class="btn" onclick="closeM('expense')">Cancelar</button><button class="btn primary" id="expenseSaveBtn" onclick="saveExpense()">Salvar gasto</button></div></div></div></div>
+<!-- ========================================================= HTML — MODAL DE RENDA ========================================================= -->
+<div class="modal-bg" id="mIncome"><div class="modal"><div class="modal-head"><div><div class="eyebrow">Nova receita</div><h2>Adicionar fonte de renda</h2></div><button class="close" onclick="closeM('income')">×</button></div>
+  <div class="income-mode-tabs" role="tablist" aria-label="Modo de cadastro da renda">
+    <button id="incomeSimpleTab" class="active" type="button" onclick="switchIncomeMode('simple')">Simples</button>
+    <button id="incomeDetailedTab" type="button" onclick="switchIncomeMode('detailed')">Detalhado</button>
+  </div>
+  <div id="incomeSimplePanel" class="income-mode-panel active">
+    <p class="muted small-note">Ideal para quem só quer informar quanto realmente recebe por mês.</p>
+    <div class="form">
+      <div class="field full"><label>Nome da renda</label><input id="iSimpleTitle" placeholder="Ex.: Salário"></div>
+      <div class="field"><label>Valor líquido estimado</label><input id="iSimpleNet" placeholder="R$ 0,00"><small class="muted">Serve como previsão até você registrar o valor realmente recebido na competência.</small></div>
+      <div class="field"><label>Dia do pagamento</label><input id="iSimplePayDay" type="number" min="1" max="31" value="5"></div>
+      <div class="field full"><label>Empresa / origem <span class="muted">(opcional)</span></label><input id="iSimpleCompany" placeholder="Ex.: Empresa X"></div>
+    </div>
+  </div>
+  <div id="incomeDetailedPanel" class="income-mode-panel">
+    <p class="muted small-note">Use quando quiser registrar salário bruto, adicionais e estimativas de descontos.</p>
+    <div class="form">
+      <div class="field full"><label>Título da renda</label><input id="iTitle" placeholder="Ex.: Salário — Empresa X"></div>
+      <div class="field"><label>Tipo</label><select id="iType"><option value="salary">Salário</option><option>Freelance</option><option>Benefício</option><option>Rendimento</option><option>Outro</option></select></div>
+      <div class="field"><label>Empresa</label><input id="iCompany"></div>
+      <div class="field"><label>Salário/valor mensal</label><input id="iMonthly" placeholder="R$ 0,00"></div>
+      <div class="field"><label>Líquido estimado / referência</label><input id="iNetReal" placeholder="Ex.: R$ 2.054,81"><small class="muted">O valor realmente recebido é registrado separadamente em cada competência.</small></div>
+      <div class="field"><label>Valor por dia (alternativo)</label><input id="iDaily" placeholder="R$ 0,00"></div>
+      <div class="field"><label>Dias trabalhados</label><input id="iDays" type="number" value="22"></div>
+      <div class="field"><label>Insalubridade</label><select id="iIns"><option value="0">Não possui</option><option value="10">10%</option><option value="20">20%</option><option value="40">40%</option><option value="manual">Valor manual</option></select></div>
+      <div class="field"><label>Base da insalubridade</label><select id="iInsBase"><option value="salary">Salário-base</option><option value="manual">Valor manual</option><option value="minimum">Salário mínimo (referência)</option></select></div>
+      <div class="field"><label>Base manual</label><input id="iBase" placeholder="Opcional"></div>
+      <div class="field"><label>Insalubridade manual</label><input id="iInsManual" placeholder="Opcional"></div>
+      <div class="field"><label>Fechamento da folha</label><input id="iClose" type="number" value="22"></div>
+      <div class="field"><label>Dia estimado do salário</label><input id="iPayDay" type="number" value="5"></div>
+      <div class="field"><label>Dia estimado do VA</label><input id="iVaDay" type="number"></div>
+      <div class="field"><label>Dia estimado do VT</label><input id="iVtDay" type="number"></div>
+      <div class="field"><label>VA diário</label><input id="iVa" placeholder="R$ 0,00"></div>
+      <div class="field"><label>VT por passagem</label><input id="iVt" placeholder="R$ 0,00"></div>
+      <div class="field"><label>Passagens/dia</label><input id="iTrips" type="number" value="2"></div>
+    </div>
+    <p class="muted small-note"><b>Importante:</b> o cálculo de INSS/IRRF é apenas estimativo quando o líquido real não é informado.</p>
+  </div>
+  <div class="modal-foot"><button class="btn" onclick="closeM('income')">Cancelar</button><button class="btn primary" onclick="saveIncome()">Salvar renda</button></div>
+</div></div>
+<!-- ========================================================= HTML — MODAL DE META ========================================================= -->
+<div class="modal-bg" id="mGoal"><div class="modal"><div class="modal-head"><div><div class="eyebrow">Planejamento</div><h2>Nova meta</h2></div><button class="close" onclick="closeM('goal')">×</button></div><div class="form"><div class="field full"><label>Nome</label><input id="gName"></div><div class="field"><label>Valor alvo</label><input id="gTarget"></div><div class="field"><label>Já guardado</label><input id="gSaved"></div><div class="field"><label>Aporte mensal</label><input id="gMonthly"></div><div class="field"><label>Prazo</label><input id="gDate" type="date"></div></div><div class="modal-foot"><button class="btn" onclick="closeM('goal')">Cancelar</button><button class="btn primary" onclick="saveGoal()">Salvar meta</button></div></div></div>
+<!-- ========================================================= HTML — MODAL DE COFRE ========================================================= -->
+<div class="modal-bg" id="mVault"><div class="modal"><div class="modal-head"><div><div class="eyebrow">Dinheiro guardado</div><h2 id="vaultModalTitle">Novo cofre</h2></div><button class="close" onclick="closeM('vault')">×</button></div><div class="form"><div class="field full"><label>Nome do cofre</label><input id="vName" placeholder="Ex.: Viagem, Emergência, PC novo"></div><div class="field"><label>Categoria</label><select id="vCategory"><option>Emergência</option><option>Casa</option><option>Educação</option><option>Viagem</option><option>Lazer</option><option>Tecnologia</option><option>Saúde</option><option>Família</option><option>Investimentos</option><option>Outros</option></select></div><div class="field"><label>Saldo inicial</label><input id="vInitial" placeholder="R$ 0,00"></div></div><p class="muted">O saldo será controlado por movimentações. Depois você poderá registrar depósitos e retiradas sem apagar o histórico.</p><div class="modal-foot"><button class="btn" onclick="closeM('vault')">Cancelar</button><button class="btn primary" id="vaultSaveBtn" onclick="saveVault()">Criar cofre</button></div></div></div>
+<!-- ========================================================= HTML — MODAL DE MOVIMENTAÇÃO DO COFRE ========================================================= -->
+<div class="modal-bg" id="mVaultTx"><div class="modal"><div class="modal-head"><div><div class="eyebrow">Movimentação</div><h2 id="vaultTxTitle">Depositar</h2></div><button class="close" onclick="closeM('vaultTx')">×</button></div><div class="form"><div class="field"><label>Tipo</label><select id="vTxType"><option value="deposit">Depósito</option><option value="withdraw">Retirada</option></select></div><div class="field"><label>Valor</label><input id="vTxAmount" placeholder="R$ 0,00"></div><div class="field full"><label>Descrição</label><input id="vTxDesc" placeholder="Ex.: Sobrou do salário"></div></div><div class="modal-foot"><button class="btn" onclick="closeM('vaultTx')">Cancelar</button><button class="btn primary" onclick="saveVaultTx()">Registrar movimentação</button></div></div></div>
+
+
+<!-- ========================================================= HTML — MODAL DE ORÇAMENTOS ========================================================= -->
+<div class="modal-bg" id="mBudget"><div class="modal"><div class="modal-head"><div><div class="eyebrow">Planejamento mensal</div><h2>Limites por categoria</h2></div><button class="close" onclick="closeM('budget')">×</button></div><p class="muted">Defina quanto deseja gastar em cada categoria por mês. Deixe em branco para não usar limite.</p><div class="budget-editor" id="budgetEditor"></div><div class="modal-foot"><button class="btn" onclick="closeM('budget')">Cancelar</button><button class="btn primary" onclick="saveBudgets()">Salvar limites</button></div></div></div>
+<!-- ========================================================= HTML — VA / FERIADOS ========================================================= -->
+<div class="modal-bg" id="mVaConfig"><div class="modal"><div class="modal-head"><div><div class="eyebrow">Vale Alimentação</div><h2>Configurar carteira</h2></div><button class="close" onclick="closeM('vaConfig')">×</button></div><div class="form"><div class="field full"><label>Valor mensal previsto</label><input id="vaConfigExpected" placeholder="R$ 0,00"></div></div><div class="modal-foot"><button class="btn" onclick="closeM('vaConfig')">Cancelar</button><button class="btn primary" onclick="saveVaConfig()">Salvar</button></div></div></div>
+<div class="modal-bg" id="mVaSpend"><div class="modal"><div class="modal-head"><div><div class="eyebrow">Vale Alimentação</div><h2>Registrar gasto</h2></div><button class="close" onclick="closeM('vaSpend')">×</button></div><div class="form"><div class="field"><label>Data</label><input id="vaSpendDate" type="date"></div><div class="field"><label>Valor</label><input id="vaSpendAmount" placeholder="R$ 0,00"></div><div class="field"><label>Categoria</label><select id="vaSpendCategory" onchange="vaCategoryUI()"><option>Mercado</option><option>Restaurante</option><option>Delivery/iFood</option><option>Outros</option></select></div><div class="field"><label>Estabelecimento / descrição</label><input id="vaSpendDesc" placeholder="Ex.: Mercado do bairro"></div><div class="field full" id="vaOtherWrap" style="display:none"><label>Outros — no que foi gasto?</label><input id="vaSpendOther" placeholder="Descreva livremente"></div></div><div class="modal-foot"><button class="btn" onclick="closeM('vaSpend')">Cancelar</button><button class="btn primary" onclick="saveVaSpend()">Registrar</button></div></div></div>
+<div class="modal-bg" id="mHoliday"><div class="modal"><div class="modal-head"><div><div class="eyebrow">Calendário</div><h2>Adicionar feriado / data local</h2></div><button class="close" onclick="closeM('holiday')">×</button></div><div class="form"><div class="field"><label>Data</label><input id="holidayDate" type="date"></div><div class="field"><label>Tipo</label><select id="holidayType"><option value="state">Estadual</option><option value="city">Municipal</option><option value="manual">Outra data importante</option></select></div><div class="field full"><label>Nome</label><input id="holidayName" placeholder="Ex.: Aniversário do município"></div></div><p class="muted">Feriados nacionais comuns são exibidos automaticamente. Datas estaduais e municipais podem variar; cadastre aqui as que se aplicam à sua região.</p><div class="modal-foot"><button class="btn" onclick="closeM('holiday')">Cancelar</button><button class="btn primary" onclick="saveHoliday()">Salvar data</button></div></div></div>
+<!-- ========================================================= HTML — BLOQUEIO LOCAL ========================================================= -->
+<div class="lock-screen" id="lockScreen" role="dialog" aria-modal="true" aria-label="FinanSee bloqueado">
+  <div class="lock-card"><div class="lock-logo">F</div><div class="eyebrow">FinanSee</div><h2>App bloqueado</h2><p class="muted">Digite sua senha ou PIN local para continuar.</p><div class="field"><input id="unlockSecret" type="password" inputmode="text" autocomplete="current-password" placeholder="Senha ou PIN"></div><div id="unlockMessage" class="unlock-message"></div><button class="btn primary lock-main-btn" onclick="unlockApp()">Desbloquear</button><small class="muted">Os dados permanecem somente neste navegador/dispositivo, salvo quando você exporta um backup.</small></div>
+</div>
+<!-- ========================================================= HTML — AÇÕES MOBILE ========================================================= -->
+<div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheets()"></div>
+<div class="mobile-sheet" id="quickSheet"><div class="sheet-grabber"></div><div class="eyebrow">Adicionar</div><h2>Ação rápida</h2><div class="quick-grid"><button onclick="quickExpense()"><span>💸</span><b>Novo gasto</b></button><button onclick="quickIncome()"><span>💰</span><b>Nova renda</b></button><button onclick="quickGoal()"><span>🎯</span><b>Nova meta</b></button><button onclick="quickVault()"><span>🔐</span><b>Novo cofre</b></button><button onclick="quickPurchase()"><span>🛒</span><b>Planejar compra</b></button></div></div>
+<div class="mobile-sheet" id="moreSheet"><div class="sheet-grabber"></div><div class="eyebrow">Navegação</div><h2>Mais recursos</h2><div class="sheet-list" id="moreSheetItems"></div></div>
+
+
+<!-- ========================================================= JAVASCRIPT — ARQUIVOS DO APP ========================================================= -->
+<script src="./js/accounts.js"></script>
+<script src="./js/core.js"></script>
+<script src="./js/navigation.js"></script>
+<script src="./js/calculations.js"></script>
+<script src="./js/monthly.js"></script>
+<script src="./js/expenses.js"></script>
+<script src="./js/income.js"></script>
+<script src="./js/planning.js"></script>
+<script src="./js/purchase.js"></script>
+<script src="./js/calendar-alerts.js"></script>
+<script src="./js/va.js"></script>
+<script src="./js/reports.js"></script>
+<script src="./js/insights.js"></script>
+<script src="./js/settings.js"></script>
+<script src="./js/onboarding.js"></script>
+<script src="./js/security.js"></script>
+<script src="./js/pwa.js"></script>
+<script src="./js/init.js"></script>
+
+<script>
+['loginEmail','loginPassword'].forEach(id=>document.getElementById(id)?.addEventListener('keydown',e=>{if(e.key==='Enter')loginAccount()}));
+['regName','regEmail','regPassword','regConfirm'].forEach(id=>document.getElementById(id)?.addEventListener('keydown',e=>{if(e.key==='Enter')createAccount()}));
+</script>
+</body></html>

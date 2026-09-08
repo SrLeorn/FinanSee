@@ -1,0 +1,7 @@
+FinanSee PWA v8
+
+1. Para testar localmente, execute INICIAR_LOCAL.bat.
+2. Para publicar, envie TODOS os arquivos e pastas desta pasta para a raiz do GitHub.
+3. Ative GitHub Pages na branch main / root.
+4. No primeiro acesso, o FinanSee oferece instalação ou uso no navegador.
+5. Crie/login em uma conta local e faça backup JSON regularmente.

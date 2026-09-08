@@ -1,0 +1,26 @@
+/* ========================================================= JAVASCRIPT — ESTADO / ARMAZENAMENTO POR USUÁRIO ========================================================= */
+let data=emptyData('');let charts={},view=new Date();view.setDate(1);view.setHours(12,0,0,0);
+function emptyData(name=''){return {profile:{name:name||'',closeDay:22,onboardingCompleted:false,onboardingStep:1,budgets:{},trackingStartKey:(()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')})(),state:'',city:'',holidays:[],va:{expected:0,monthly:{},transactions:[]}},incomeSources:[],expenses:[],expenseStatus:{},goals:[],vaults:[],activity:[]}}
+function money(v){return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(v)||0)}
+function n(v){return typeof v==='number'?v:Number(String(v||'').replace(/[R$\s.]/g,'').replace(',','.'))||0}
+function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]))}
+function toast(t,err=false){const x=document.createElement('div');x.textContent=t;x.className='toast '+(err?'toast-error':'toast-ok');document.body.appendChild(x);setTimeout(()=>x.remove(),2400)}
+function logActivity(type,title,detail='',amount=null){if(!Array.isArray(data.activity))data.activity=[];data.activity.unshift({id:id(),type:String(type||'info'),title:String(title||''),detail:String(detail||''),amount:amount==null?null:n(amount),date:new Date().toISOString()});data.activity=data.activity.slice(0,100)}
+function normalizeData(raw){
+  const fallback=emptyData(currentUser?.name||'');const d=raw&&typeof raw==='object'?raw:fallback;
+  d.profile=d.profile&&typeof d.profile==='object'?d.profile:fallback.profile;d.profile.name=String(d.profile.name||currentUser?.name||'');d.profile.closeDay=Number(d.profile.closeDay)||22;
+  const hadOnboardingFlag=typeof d.profile.onboardingCompleted==='boolean';d.profile.budgets=d.profile.budgets&&typeof d.profile.budgets==='object'&&!Array.isArray(d.profile.budgets)?d.profile.budgets:{};
+  d.profile.trackingStartKey=/^\d{4}-\d{2}$/.test(d.profile.trackingStartKey||'')?d.profile.trackingStartKey:mkey(new Date());d.profile.state=String(d.profile.state||'').toUpperCase().slice(0,2);d.profile.city=String(d.profile.city||'');d.profile.holidays=Array.isArray(d.profile.holidays)?d.profile.holidays:[];
+  d.profile.va=d.profile.va&&typeof d.profile.va==='object'?d.profile.va:{expected:0,monthly:{},transactions:[]};d.profile.va.expected=n(d.profile.va.expected);d.profile.va.monthly=d.profile.va.monthly&&typeof d.profile.va.monthly==='object'?d.profile.va.monthly:{};d.profile.va.transactions=Array.isArray(d.profile.va.transactions)?d.profile.va.transactions:[];
+  d.goals=Array.isArray(d.goals)?d.goals:[];d.expenses=Array.isArray(d.expenses)?d.expenses:[];d.incomeSources=Array.isArray(d.incomeSources)?d.incomeSources:[];d.activity=Array.isArray(d.activity)?d.activity:[];d.expenseStatus=d.expenseStatus&&typeof d.expenseStatus==='object'&&!Array.isArray(d.expenseStatus)?d.expenseStatus:{};
+  if(!Array.isArray(d.vaults)){d.vaults=[];const oldReserve=n(d.profile?.reserve),oldGoalSaved=d.goals.reduce((s,g)=>s+n(g.saved),0),legacyVault=Math.max(0,oldReserve-oldGoalSaved);if(legacyVault>0)d.vaults.push({id:id(),name:'Cofre geral',category:'Emergência',transactions:[{id:id(),type:'deposit',amount:legacyVault,desc:'Saldo anterior não vinculado às metas',date:new Date().toISOString().slice(0,10)}]})}
+  delete d.profile.reserve;delete d.profile.reserveGoal;
+  d.vaults.forEach(v=>{v.transactions=Array.isArray(v.transactions)?v.transactions:[]});d.goals.forEach(g=>{g.target=n(g.target);g.saved=n(g.saved);g.monthly=n(g.monthly)});
+  d.expenses.forEach(e=>{e.responsibility=e.responsibility||'mine';e.trackingStartKey=/^\d{4}-\d{2}$/.test(e.trackingStartKey||'')?e.trackingStartKey:d.profile.trackingStartKey;if(e.method==='PIX Crédito'){e.pixCredit=e.pixCredit||{};e.pixCredit.sent=n(e.pixCredit.sent)||n(e.value);e.pixCredit.total=n(e.pixCredit.total)||n(e.value);e.pixCredit.parts=Math.min(10,Math.max(1,Number(e.pixCredit.parts||e.parts)||1))}});
+  d.incomeSources.forEach(r=>{r.mode=r.mode==='simple'?'simple':'detailed';r.monthlyRecords=r.monthlyRecords&&typeof r.monthlyRecords==='object'?r.monthlyRecords:{};if(!n(r.estimatedNet))r.estimatedNet=n(r.netReal)||calcLegacyEstimate(r);});
+  Object.keys(d.profile.budgets).forEach(k=>{d.profile.budgets[k]=Math.max(0,n(d.profile.budgets[k]))});if(!hadOnboardingFlag)d.profile.onboardingCompleted=d.incomeSources.length>0;d.profile.onboardingStep=Math.min(4,Math.max(1,Number(d.profile.onboardingStep)||1));return d;
+}
+function calcLegacyEstimate(r){if(r.mode==='simple')return n(r.netReal);let base=n(r.monthly)||n(r.daily)*Number(r.days||22);return n(r.netReal)||base}
+function save(){const key=userDataKey();if(!key)return;localStorage.setItem(key,JSON.stringify(data));renderAll()}
+function load(){const key=userDataKey();if(!key){data=emptyData('');return}try{const raw=localStorage.getItem(key);data=normalizeData(raw?JSON.parse(raw):emptyData(currentUser?.name||''));if(!raw)localStorage.setItem(key,JSON.stringify(data))}catch(e){data=emptyData(currentUser?.name||'')}}
